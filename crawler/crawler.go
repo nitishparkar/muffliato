@@ -5,29 +5,26 @@ import (
 	"net/http"
 	"golang.org/x/net/html"
 	"fmt"
+	"net/url"
 )
 
 type Crawler struct {
-	baseUrl string
+	baseUrl *url.URL
 	initalDelay int
-	depth int
-	vistedUrls []string
 }
 
 func NewCrawler(baseUrl string) *Crawler {
 	crawler := new(Crawler)
-	crawler.baseUrl = baseUrl
+	crawler.baseUrl, _ = url.Parse(baseUrl)
 	crawler.initalDelay = rand.Intn(10)
-	crawler.depth = rand.Intn(3)
-	crawler.vistedUrls = make([]string, 0)
 
 	return crawler
 }
 
 func (self *Crawler) Crawl() {
-	url := self.baseUrl
+	baseUrl := self.baseUrl
 
-	resp, err := http.Get(url)
+	resp, err := http.Get(baseUrl.String())
 
 	if err != nil {
 		return
@@ -50,7 +47,18 @@ func (self *Crawler) Crawl() {
 			if token.Data == "a" {
 				for _, attr := range token.Attr {
 					if attr.Key == "href" {
-						fmt.Println("Found href:", attr.Val)
+						u, err := url.Parse(attr.Val)
+						if err == nil {
+							if !u.IsAbs() {
+								if u.String() == "/" {
+									continue
+								}
+								u.Scheme = baseUrl.Scheme
+								u.Host = baseUrl.Host
+								fmt.Println("Visiting:", u.String())
+								_, _ = http.Get(u.String())
+							}
+						}
 						break
 					}
 				}
