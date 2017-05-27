@@ -6,6 +6,7 @@ import (
 	"golang.org/x/net/html"
 	"fmt"
 	"net/url"
+	"time"
 )
 
 type Crawler struct {
@@ -34,35 +35,49 @@ func (self *Crawler) Crawl() {
 
 	tokenizer := html.NewTokenizer(resp.Body)
 
+	toVisit := make([]url.URL, 0)
 
 	for {
 		next := tokenizer.Next()
 
-		switch next {
-		case html.ErrorToken:
-			return
-		case html.StartTagToken:
-			token := tokenizer.Token()
+		if next == html.ErrorToken {
+			break
+		}
 
-			if token.Data == "a" {
-				for _, attr := range token.Attr {
-					if attr.Key == "href" {
-						u, err := url.Parse(attr.Val)
-						if err == nil {
-							if !u.IsAbs() {
-								if u.String() == "/" {
-									continue
-								}
-								u.Scheme = baseUrl.Scheme
-								u.Host = baseUrl.Host
-								fmt.Println("Visiting:", u.String())
-								_, _ = http.Get(u.String())
+		token := tokenizer.Token()
+
+		if token.Data == "a" {
+			for _, attr := range token.Attr {
+				if attr.Key == "href" {
+					u, err := url.Parse(attr.Val)
+					if err == nil {
+						if !u.IsAbs() {
+							if u.String() == "/" {
+								continue
 							}
+							u.Scheme = baseUrl.Scheme
+							u.Host = baseUrl.Host
+							toVisit = append(toVisit, *u)
 						}
-						break
 					}
+					break
 				}
 			}
 		}
+	}
+
+	numConplete := 0
+
+	for _, urlToVisit := range toVisit {
+		go func(urlToVisit url.URL) {
+			time.Sleep(time.Duration(rand.Intn(len(toVisit) * 2)) * time.Second)
+			fmt.Println("Visitng: ", urlToVisit.String())
+			_, _ = http.Get(urlToVisit.String())
+			numConplete++
+		}(urlToVisit)
+	}
+
+	for numConplete < len(toVisit) {
+		time.Sleep(1 * time.Second)
 	}
 }
