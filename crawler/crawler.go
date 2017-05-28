@@ -11,21 +11,22 @@ import (
 
 type Crawler struct {
 	baseUrl *url.URL
-	initalDelay int
+	initalDelay time.Duration
 }
 
 func NewCrawler(baseUrl string) *Crawler {
 	crawler := new(Crawler)
 	crawler.baseUrl, _ = url.Parse(baseUrl)
-	crawler.initalDelay = rand.Intn(10)
+	crawler.initalDelay = time.Duration(rand.Intn(10)) * time.Second
 
 	return crawler
 }
 
 func (self *Crawler) Crawl() {
-	baseUrl := self.baseUrl
+	fmt.Printf("***** Crawling: %v in %v *****\n", self.baseUrl.String(), self.initalDelay)
+	time.Sleep(self.initalDelay)
 
-	resp, err := http.Get(baseUrl.String())
+	resp, err := http.Get(self.baseUrl.String())
 
 	if err != nil {
 		return
@@ -55,8 +56,8 @@ func (self *Crawler) Crawl() {
 							if u.String() == "/" {
 								continue
 							}
-							u.Scheme = baseUrl.Scheme
-							u.Host = baseUrl.Host
+							u.Scheme = self.baseUrl.Scheme
+							u.Host = self.baseUrl.Host
 							toVisit = append(toVisit, *u)
 						}
 					}
@@ -71,7 +72,7 @@ func (self *Crawler) Crawl() {
 	for _, urlToVisit := range toVisit {
 		go func(urlToVisit url.URL) {
 			time.Sleep(time.Duration(rand.Intn(len(toVisit) * 2)) * time.Second)
-			fmt.Println("Visitng: ", urlToVisit.String())
+			fmt.Println("Visiting: ", urlToVisit.String())
 			_, _ = http.Get(urlToVisit.String())
 			numConplete++
 		}(urlToVisit)
