@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/nitishparkar/muffliato/crawler"
 	"io/ioutil"
 	"strings"
 )
@@ -17,7 +18,18 @@ func main() {
 
 	sites := strings.Split(string(data), "\n")
 
-	for _, site := range(sites) {
-		fmt.Println(site)
+	done := make(chan bool)
+
+	for _, site := range sites {
+		go func(site string) {
+			crawler := crawler.NewCrawler(site)
+			crawler.Crawl()
+
+			done <- true
+		}(site)
 	}
+
+	<-done
+
+	fmt.Println("Exiting")
 }

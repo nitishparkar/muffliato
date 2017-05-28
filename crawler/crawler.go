@@ -1,16 +1,16 @@
 package crawler
 
 import (
+	"fmt"
+	"golang.org/x/net/html"
 	"math/rand"
 	"net/http"
-	"golang.org/x/net/html"
-	"fmt"
 	"net/url"
 	"time"
 )
 
 type Crawler struct {
-	baseUrl *url.URL
+	baseUrl     *url.URL
 	initalDelay time.Duration
 }
 
@@ -29,6 +29,7 @@ func (self *Crawler) Crawl() {
 	resp, err := http.Get(self.baseUrl.String())
 
 	if err != nil {
+		fmt.Println("Could not crawl", self.baseUrl.String(), err.Error())
 		return
 	}
 
@@ -67,18 +68,18 @@ func (self *Crawler) Crawl() {
 		}
 	}
 
-	numConplete := 0
+	numComplete := 0
 
 	for _, urlToVisit := range toVisit {
 		go func(urlToVisit url.URL) {
-			time.Sleep(time.Duration(rand.Intn(len(toVisit) * 2)) * time.Second)
+			time.Sleep(time.Duration(rand.Intn(len(toVisit)*2)) * time.Second)
 			fmt.Println("Visiting: ", urlToVisit.String())
 			_, _ = http.Get(urlToVisit.String())
-			numConplete++
+			numComplete++
 		}(urlToVisit)
 	}
 
-	for numConplete < len(toVisit) {
+	for numComplete < len(toVisit) {
 		time.Sleep(1 * time.Second)
 	}
 }
