@@ -27,7 +27,7 @@ func main() {
 		}
 	}
 
-	done := make(chan bool)
+	done := make(chan bool, len(validSites))
 
 	for _, site := range validSites {
 		go func(site string) {
@@ -38,7 +38,9 @@ func main() {
 		}(site)
 	}
 
-	<-done
+	for _ = range done {
+
+	}
 
 	fmt.Println("Exiting")
 }
