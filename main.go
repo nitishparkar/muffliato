@@ -18,9 +18,18 @@ func main() {
 
 	sites := strings.Split(string(data), "\n")
 
-	done := make(chan bool)
+	validSites := make([]string, 0)
 
 	for _, site := range sites {
+		t := strings.TrimSpace(site)
+		if t != "" {
+			validSites = append(validSites, t)
+		}
+	}
+
+	done := make(chan bool)
+
+	for _, site := range validSites {
 		go func(site string) {
 			crawler := crawler.NewCrawler(site)
 			crawler.Crawl()
